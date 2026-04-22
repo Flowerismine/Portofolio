@@ -268,8 +268,26 @@ export default function Home() {
           </div>
 
           <div className="stat-row anim-fade-up d5" style={{ display: "flex", gap: "3.5rem", flexWrap: "wrap" }}>
+            {/* Projects stat with subtitle */}
+            <div key="proyek">
+              <div style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: "2.5rem", fontWeight: 300,
+                color: "var(--gold-dark)", lineHeight: 1,
+              }}>10+</div>
+              <div style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: "0.58rem", letterSpacing: "0.18em",
+                textTransform: "uppercase", color: "var(--ink-faint)",
+                marginTop: "0.3rem",
+              }}>Proyek Selesai</div>
+              <div style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: "0.52rem", letterSpacing: "0.1em",
+                color: "var(--gold)", marginTop: "0.25rem", fontStyle: "italic",
+              }}>Publik &amp; konfidensial</div>
+            </div>
             {[
-              [projects.length.toString(), "Proyek Selesai"],
               ["3+", "Tahun Pengalaman"],
               ["100%", "Client Satisfaction"],
             ].map(([num, label]) => (
