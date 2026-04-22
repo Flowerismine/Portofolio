@@ -27,6 +27,9 @@ export default function ProjectModal({
   const touchStartY = useRef<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
+  // Only show slides that loaded successfully
+  const validSlides = [...Array(project.ssCount)].map((_, i) => i).filter(i => !imgErrors[i]);
+
   // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -44,8 +47,24 @@ export default function ProjectModal({
     if (i >= 0 && i < project.ssCount) setSlide(i);
   }, [project.ssCount]);
 
-  const prev = () => goTo(slide - 1);
-  const next = () => goTo(slide + 1);
+  // When a slide errors, jump to nearest valid slide
+  const handleImgError = (i: number) => {
+    setImgErrors(prev => {
+      const updated = { ...prev, [i]: true };
+      const nextValid = [...Array(project.ssCount)].map((_, idx) => idx).find(idx => !updated[idx]);
+      if (nextValid !== undefined) setSlide(nextValid);
+      return updated;
+    });
+  };
+
+  const prev = () => {
+    const idx = validSlides.indexOf(slide);
+    if (idx > 0) setSlide(validSlides[idx - 1]);
+  };
+  const next = () => {
+    const idx = validSlides.indexOf(slide);
+    if (idx < validSlides.length - 1) setSlide(validSlides[idx + 1]);
+  };
 
   // Touch swipe
   const onTouchStart = (e: React.TouchEvent) => {
@@ -123,38 +142,16 @@ export default function ProjectModal({
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {!hasError(slide) ? (
-            <img
-              key={`${project.slug}-${slide}`}
-              src={imgSrc(slide)}
-              alt={`${project.title} — ${SLIDE_LABELS[slide]}`}
-              onError={() => setImgErrors(prev => ({ ...prev, [slide]: true }))}
-              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-            />
-          ) : (
-            <div style={{
-              width: "100%", height: "100%",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: "0.75rem",
-              background: `${project.color}10`,
-            }}>
-              <span style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: "4.5rem", fontWeight: 300, fontStyle: "italic",
-                color: project.color, lineHeight: 1,
-              }}>{project.title[0]}</span>
-              <span style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: "0.62rem", letterSpacing: "0.16em",
-                textTransform: "uppercase", color: "var(--ink-faint)",
-              }}>
-                Letakkan gambar di /public/screenshots/{project.slug}/{slide + 1}.jpg
-              </span>
-            </div>
-          )}
+          <img
+            key={`${project.slug}-${slide}`}
+            src={imgSrc(slide)}
+            alt={`${project.title} — ${SLIDE_LABELS[slide]}`}
+            onError={() => handleImgError(slide)}
+            style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+          />
 
           {/* Arrows */}
-          {slide > 0 && (
+          {validSlides.indexOf(slide) > 0 && (
             <button onClick={prev} style={{
               position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)",
               background: "rgba(250,248,244,0.92)", border: "1px solid var(--border)",
@@ -163,7 +160,7 @@ export default function ProjectModal({
               cursor: "pointer", fontSize: "1.2rem", transition: "all 0.2s",
             }}>‹</button>
           )}
-          {slide < project.ssCount - 1 && (
+          {validSlides.indexOf(slide) < validSlides.length - 1 && (
             <button onClick={next} style={{
               position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)",
               background: "rgba(250,248,244,0.92)", border: "1px solid var(--border)",
@@ -178,7 +175,7 @@ export default function ProjectModal({
             position: "absolute", bottom: "0.75rem", left: "50%", transform: "translateX(-50%)",
             display: "flex", gap: "0.4rem",
           }}>
-            {[...Array(project.ssCount)].map((_, i) => (
+            {validSlides.map((i) => (
               <div
                 key={i}
                 onClick={() => goTo(i)}
@@ -201,7 +198,7 @@ export default function ProjectModal({
           borderTop: "1px solid var(--border)",
           background: "var(--cream)",
         }}>
-          {[...Array(project.ssCount)].map((_, i) => (
+          {validSlides.map((i) => (
             <div
               key={i}
               onClick={() => goTo(i)}
@@ -219,29 +216,10 @@ export default function ProjectModal({
                 <img
                   src={imgSrc(i)}
                   alt={SLIDE_LABELS[i]}
-                  onError={() => setImgErrors(prev => ({ ...prev, [i]: true }))}
+                  onError={() => handleImgError(i)}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
-              ) : (
-                <div style={{ textAlign: "center", padding: "4px" }}>
-                  <div style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: "0.85rem", fontStyle: "italic",
-                    color: i === slide ? "var(--gold-dark)" : "var(--ink-faint)",
-                    lineHeight: 1, marginBottom: "2px",
-                  }}>
-                    {["I", "II", "III", "IV", "V"][i]}
-                  </div>
-                  <div style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: "0.42rem", letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color: i === slide ? "var(--gold-dark)" : "var(--ink-faint)",
-                  }}>
-                    {SLIDE_LABELS[i]}
-                  </div>
-                </div>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
